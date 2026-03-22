@@ -160,12 +160,10 @@ def login():
         #   usuario:  ' OR '1'='1' --
         #   password: (cualquier cosa)
         # ---------------------------------------------------
-        query = f"""
-            SELECT id, username, role
-            FROM   users
-            WHERE  username = '{username}'
-            AND    password = '{password}'
-        """
+        # V-01: Consulta vulnerable en UNA SOLA LÍNEA para que el comentario
+        # SQL (--) funcione correctamente en SQLite y el payload surta efecto.
+        # Payload de ejemplo: usuario = admin' --  / password = (cualquier cosa)
+        query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password = '{password}'"
 
         conn = get_connection()
         try:
@@ -227,13 +225,9 @@ def search():
         # Payload para verificar número de columnas:
         #   %' UNION SELECT 1,2,3,4 --
         # ---------------------------------------------------
-        raw_query = f"""
-            SELECT id, title, author, category
-            FROM   books
-            WHERE  title    LIKE '%{term}%'
-               OR  author   LIKE '%{term}%'
-               OR  category LIKE '%{term}%'
-        """
+        # V-02: Búsqueda vulnerable también en una sola línea.
+        # Payload: %' UNION SELECT id, username, password, role FROM users --
+        raw_query = f"SELECT id, title, author, category FROM books WHERE title LIKE '%{term}%' OR author LIKE '%{term}%' OR category LIKE '%{term}%'"
 
         conn = get_connection()
         try:
