@@ -7,3 +7,5 @@ services:
       - ./db:/app/db
     environment:
       - FLASK_ENV=development
+    env_file:
+      - .env
