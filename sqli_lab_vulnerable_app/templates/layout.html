@@ -14,7 +14,7 @@
     La interfaz no debe exponer opciones que el usuario no puede usar.
   -->
   <nav class="navbar">
-    <span class="nav-brand">🔐 Security Lab</span>
+    <span class="nav-brand">Security Lab</span>
     {% if session.get('username') %}
       <div class="nav-links">
         <a href="{{ url_for('dashboard') }}">Dashboard</a>

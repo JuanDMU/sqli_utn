@@ -30,6 +30,13 @@ DB_PATH  = BASE_DIR / "db" / "lab.db"
 
 app = Flask(__name__)
 
+
+# -------------------------------
+from flask_wtf import CSRFProtect
+
+csrf = CSRFProtect(app)
+# -------------------------------
+
 # ---------------------------------------------------------------
 # V-04: SECRET_KEY hardcodeada en el código fuente.
 # En una aplicación real debe cargarse desde una variable de

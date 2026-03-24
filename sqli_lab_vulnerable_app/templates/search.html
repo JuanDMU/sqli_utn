@@ -7,6 +7,8 @@
 
 <div class="card">
   <form method="post">
+    {{ csrf_token() }}
+    
     <div class="form-group">
       <label for="term">Término de búsqueda</label>
       <input type="text" id="term" name="term" placeholder="Buscar por título, autor o categoría...">
