@@ -23,6 +23,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3
 from pathlib import Path
+from werkzeug.security import generate_password_hash, check_password_hash
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH  = BASE_DIR / "db" / "lab.db"
@@ -50,6 +51,8 @@ def get_connection():
 # ---------------------------------------------------------------
 # Inicialización de la base de datos con datos de prueba
 # ---------------------------------------------------------------
+from werkzeug.security import generate_password_hash
+
 def init_db():
     conn = get_connection()
     cur  = conn.cursor()
@@ -90,9 +93,9 @@ def init_db():
     cur.execute("SELECT COUNT(*) FROM users")
     if cur.fetchone()[0] == 0:
         users = [
-            ("admin",   "Admin123",   "admin"),
-            ("analyst", "Analyst123", "user"),
-            ("student", "Student123", "user"),
+            ("admin",   generate_password_hash("Admin123"),   "admin"),
+            ("analyst", generate_password_hash("Analyst123"), "user"),
+            ("student", generate_password_hash("Student123"), "user"),
         ]
         cur.executemany(
             "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
@@ -118,7 +121,6 @@ def init_db():
 
     conn.commit()
     conn.close()
-
 
 def log_event(event, username=None, detail=None):
     """Registra un evento en el log de auditoría."""
@@ -170,14 +172,15 @@ def login():
         conn = get_connection()
         try:
             user = conn.execute(
-                "SELECT id, username, role FROM users WHERE username = ? AND password = ?",
-                (username, password)
+                "SELECT id, username, password, role FROM users WHERE username = ?",
+                (username,)
             ).fetchone()
         except Exception:
             user = None
         conn.close()
 
-        if user:
+        # V-03: Validación segura de contraseña con hash
+        if user and check_password_hash(user["password"], password):
             session["user_id"]  = user["id"]
             session["username"] = user["username"]
             session["role"]     = user["role"]
@@ -185,7 +188,6 @@ def login():
             flash("Inicio de sesión exitoso.", "success")
             return redirect(url_for("dashboard"))
 
-        
         log_event("LOGIN_FAIL", username, "Intento de login fallido")
         flash("Credenciales incorrectas.", "error")
 
