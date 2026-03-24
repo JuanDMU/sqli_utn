@@ -147,6 +147,24 @@ def login():
         username = request.form.get("username", "")
         password = request.form.get("password", "")
 
+        # ---------------------------------------------------
+        # V-01: SQL INJECTION EN LOGIN
+        # La consulta se construye concatenando directamente
+        # el input del usuario sin ningún tipo de validación.
+        #
+        # Payload de ejemplo que omite la contraseña:
+        #   usuario:  admin' --
+        #   password: (cualquier cosa)
+        #
+        # Payload que accede sin conocer ningún usuario:
+        #   usuario:  ' OR '1'='1' --
+        #   password: (cualquier cosa)
+        # ---------------------------------------------------
+        # V-01: Consulta vulnerable en UNA SOLA LÍNEA para que el comentario
+        # SQL (--) funcione correctamente en SQLite y el payload surta efecto.
+        # Payload de ejemplo: usuario = admin' --  / password = (cualquier cosa)
+        # query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password = '{password}'" se elimina esta
+
         # Codigo corregido
         conn = get_connection()
         try:
@@ -210,18 +228,24 @@ def search():
         # ---------------------------------------------------
         # V-02: Búsqueda vulnerable también en una sola línea.
         # Payload: %' UNION SELECT id, username, password, role FROM users --
-        raw_query = f"SELECT id, title, author, category FROM books WHERE title LIKE '%{term}%' OR author LIKE '%{term}%' OR category LIKE '%{term}%'"
+        # raw_query = f"SELECT id, title, author, category FROM books WHERE title LIKE '%{term}%' OR author LIKE '%{term}%' OR category LIKE '%{term}%'"
 
+        # Corrección esperada según el enunciado:
+        # Uso de consulta parametrizada con LIKE seguro
         conn = get_connection()
         try:
-            books = conn.execute(raw_query).fetchall()
-        except Exception as e:
-            flash(f"Error en la base de datos: {e}", "error")
+            term_like = f"%{term}%"
+            books = conn.execute(
+                "SELECT id, title, author, category FROM books WHERE title LIKE ? OR author LIKE ? OR category LIKE ?",
+                (term_like, term_like, term_like)
+            ).fetchall()
+        except Exception:
+            books = []
         conn.close()
 
-    # V-06: La consulta SQL cruda se pasa al template y se
-    # muestra en pantalla — expone la estructura interna de la BD.
-    return render_template("search.html", books=books, raw_query=raw_query)
+    # V-06: La consulta SQL cruda se pasaba al template
+    # ahora ya NO se envía (se corregirá completamente en V-06)
+    return render_template("search.html", books=books)
 
 
 @app.route("/admin")
