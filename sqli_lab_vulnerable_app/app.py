@@ -36,7 +36,11 @@ app = Flask(__name__)
 # entorno y nunca commitearse al repositorio.
 # ---------------------------------------------------------------
 import os
+
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
+if not app.config["SECRET_KEY"]:
+    raise ValueError("SECRET_KEY no está configurada en variables de entorno")
 
 
 # ---------------------------------------------------------------
@@ -287,6 +291,8 @@ def logout():
 # ejecutar código Python arbitrario en el servidor.
 # Nunca debe usarse debug=True en producción.
 # ---------------------------------------------------------------
+import os
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    debug_mode = os.getenv("FLASK_DEBUG", "False") == "True"
+    app.run(host="0.0.0.0", port=5000, debug=debug_mode)
